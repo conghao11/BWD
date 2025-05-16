@@ -1,117 +1,134 @@
-import React from "react";
+
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getInitials } from "@/lib/utils";
-import { useAuth } from "@/context/auth-context";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ActionModal } from "@/components/actions/action-modal";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, ChevronDown } from "lucide-react";
+import MobileNav from "./mobile-nav";
 
 export default function Header() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isActive = (path: string) => location === path;
+
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <i className="ri-plant-line text-primary text-2xl"></i>
-          <Link href="/">
-            <a className="text-primary font-semibold text-xl md:text-2xl">Cây Xanh Mỗi Ngày</a>
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
+        isScrolled
+          ? "bg-white/90 backdrop-blur-md shadow-sm py-3"
+          : "bg-transparent py-5"
+      }`}
+    >
+      <div className="container mx-auto px-4 flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center"
+        >
+          <Link href="/home" className="flex items-center">
+            <span className="text-primary text-3xl mr-2">🌱</span>
+            <span className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-green-400">
+              GreenChallenge
+            </span>
           </Link>
-        </div>
-        
-        <div className="hidden md:flex items-center space-x-6">
-          <Link href="/">
-            <a className={`transition-colors ${location === "/" ? "text-primary" : "text-gray-700 hover:text-primary"}`}>
-              Trang chủ
-            </a>
-          </Link>
-          <Link href="/actions">
-            <a className={`transition-colors ${location === "/actions" ? "text-primary" : "text-gray-700 hover:text-primary"}`}>
-              Hành động
-            </a>
-          </Link>
-          <Link href="/leaderboard">
-            <a className={`transition-colors ${location === "/leaderboard" ? "text-primary" : "text-gray-700 hover:text-primary"}`}>
-              Xếp hạng
-            </a>
-          </Link>
-          <Link href="/blog">
-            <a className={`transition-colors ${location === "/blog" ? "text-primary" : "text-gray-700 hover:text-primary"}`}>
-              Blog
-            </a>
-          </Link>
-          <Link href="/groups">
-            <a className={`transition-colors ${location === "/groups" ? "text-primary" : "text-gray-700 hover:text-primary"}`}>
-              Cộng đồng
-            </a>
-          </Link>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          {isAuthenticated ? (
-            <>
-              <Button 
-                type="button" 
-                className="hidden md:flex bg-primary text-white px-4 py-2 rounded-full hover:bg-primary-dark transition-colors"
-                onClick={() => setIsModalOpen(true)}
+        </motion.div>
+
+       
+        <motion.nav
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="hidden md:flex items-center space-x-1"
+        >
+          {[
+            { path: "/home", label: "Trang chủ" },
+            { path: "/actions", label: "Hành động xanh" },
+            { path: "/leaderboard", label: "Bảng xếp hạng" },
+            { path: "/blog", label: "Blog" },
+            { path: "/groups", label: "GreenTeam" },
+          ].map((item, index) => (
+            <Link href={item.path} key={item.path}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                  isActive(item.path)
+                    ? "bg-green-100 text-green-700"
+                    : "text-gray-700 hover:bg-green-50 hover:text-green-600"
+                }`}
               >
-                <i className="ri-add-line mr-1"></i>Hành động mới
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-1 focus:outline-none p-0">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={user?.avatar || undefined} alt={user?.displayName} />
-                      <AvatarFallback className="bg-primary-light text-white">
-                        {getInitials(user?.displayName || "")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:inline-block text-sm font-medium">
-                      {user?.displayName}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Tài khoản</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <Link href="/profile">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <i className="ri-user-line mr-2"></i>
-                      Hồ sơ
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuItem className="cursor-pointer" onClick={logout}>
-                    <i className="ri-logout-box-line mr-2"></i>
-                    Đăng xuất
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
+                {item.label}
+              </motion.div>
+            </Link>
+          ))}
+        </motion.nav>
+
+        {/* User Actions */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="hidden md:flex items-center space-x-3"
+        >
+          <Link href="/profile">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition-all duration-200"
+            >
+              <img
+                src="https://ui-avatars.com/api/?name=Lê+Công+Hào&background=27AE60&color=fff"
+                alt="User"
+                className="w-6 h-6 rounded-full mr-2 border border-green-300"
+              />
+              <span>Lê Công Hào</span>
+              <ChevronDown size={16} className="ml-1" />
+            </motion.div>
+          </Link>
+
+          <Link href="/actions/new">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-green-600 to-green-500 text-white px-5 py-2 rounded-full font-medium shadow hover:shadow-md transition-all duration-200"
+            >
+              Hành động mới
+            </motion.button>
+          </Link>
+        </motion.div>
+
+        {/* Mobile Menu Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="block md:hidden text-gray-700 focus:outline-none"
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? (
+            <X size={24} className="text-gray-900" />
           ) : (
-            <div className="flex items-center space-x-2">
-              <Link href="/login">
-                <Button variant="ghost" size="sm">Đăng nhập</Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-primary text-white hover:bg-primary-dark" size="sm">Đăng ký</Button>
-              </Link>
-            </div>
+            <Menu size={24} className="text-gray-900" />
           )}
-        </div>
+        </motion.button>
       </div>
-      
-      <ActionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {/* Mobile Navigation */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <MobileNav isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+        )}
+      </AnimatePresence>
     </header>
   );
 }

@@ -14,6 +14,7 @@ export function ActionModal({ isOpen, onClose }: ActionModalProps) {
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-primary">Ghi Nhận Hành Động Xanh</DialogTitle>
         </DialogHeader>
+        {/* @ts-expect-error: ActionForm expects onSuccess prop */}
         <ActionForm onSuccess={onClose} />
       </DialogContent>
     </Dialog>

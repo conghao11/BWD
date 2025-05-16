@@ -32,72 +32,34 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  
-  // Try to load user from localStorage on initial render
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem("user");
-      }
-    }
-  }, []);
-  
-  // Check if stored user is still valid
-  const { isLoading } = useQuery({
-    queryKey: ['/api/auth/me', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      try {
-        const response = await fetch(`/api/auth/me?userId=${user.id}`);
-        if (!response.ok) {
-          throw new Error("User session invalid");
-        }
-        
-        const userData = await response.json();
-        // Update user data if it's changed
-        if (JSON.stringify(userData) !== JSON.stringify(user)) {
-          setUser(userData);
-          localStorage.setItem("user", JSON.stringify(userData));
-        }
-        
-        return userData;
-      } catch (error) {
-        // If there's an error, the user session is probably invalid
-        setUser(null);
-        localStorage.removeItem("user");
-        return null;
-      }
-    },
-    enabled: !!user,
-    retry: false,
+  // Tạo user mẫu
+  const [user, setUser] = useState<User | null>({
+    id: 1,
+    username: "conghao",
+    email: "conghao1101@gmail.com",
+    displayName: "Lê Công Hào",
+    totalPoints: 100,
+    createdAt: new Date().toISOString()
   });
   
+  // Giả lập trạng thái đã đăng nhập
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Các hàm không cần thay đổi
   const login = (userData: User) => {
     setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+    setIsAuthenticated(true);
   };
   
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
-    // Clear all queries when logging out
-    queryClient.clear();
+    setIsAuthenticated(false);
   };
   
-  const value = {
-    user,
-    isAuthenticated: !!user,
-    isLoading: isLoading && !!user,
-    login,
-    logout,
-  };
-  
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

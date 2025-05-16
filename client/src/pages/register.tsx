@@ -12,12 +12,10 @@ export default function Register() {
       </Helmet>
       
       <div className="flex justify-center mb-8">
-        <Link href="/">
-          <a className="flex items-center text-primary">
-            <i className="ri-plant-line text-3xl mr-2"></i>
-            <span className="text-2xl font-semibold">Cây Xanh Mỗi Ngày</span>
-          </a>
-        </Link>
+        <Link href="/" className="flex items-center text-primary">
+  <i className="ri-plant-line text-3xl mr-2"></i>
+  <span className="text-2xl font-semibold">Cây Xanh Mỗi Ngày</span>
+</Link>
       </div>
       
       <RegisterForm />

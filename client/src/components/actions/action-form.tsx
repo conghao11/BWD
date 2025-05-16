@@ -1,267 +1,396 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/context/auth-context";
-import { useToast } from "@/hooks/use-toast";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-const actionFormSchema = z.object({
-  actionTypeId: z.string().min(1, { message: "Vui lòng chọn loại hành động" }),
-  description: z.string().min(3, { message: "Mô tả ít nhất 3 ký tự" }).max(200, { message: "Mô tả tối đa 200 ký tự" }),
-  location: z.string().optional(),
-  imageUrl: z.string().optional(),
-});
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Upload, X, Camera, Map, CheckCircle } from "lucide-react";
 
-type ActionFormValues = z.infer<typeof actionFormSchema>;
-
-interface ActionFormProps {
-  onSuccess?: () => void;
-}
-
-export default function ActionForm({ onSuccess }: ActionFormProps) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
-  
-  const form = useForm<ActionFormValues>({
-    resolver: zodResolver(actionFormSchema),
-    defaultValues: {
-      actionTypeId: "",
-      description: "",
-      location: "",
-      imageUrl: "",
-    },
+export default function ActionForm() {
+  const [step, setStep] = useState(1);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    actionType: "",
+    description: "",
+    location: "",
+    imageFile: null as File | null
   });
   
-  const { data: actionTypes, isLoading: isLoadingActionTypes } = useQuery({
-    queryKey: ['/api/action-types'],
-    queryFn: () => fetch('/api/action-types').then(res => res.json()),
-  });
-  
-  const createAction = useMutation({
-    mutationFn: async (values: ActionFormValues) => {
-      if (!user) throw new Error("Người dùng chưa đăng nhập");
-      
-      const actionTypeId = parseInt(values.actionTypeId);
-      const actionType = actionTypes.find((type: any) => type.id === actionTypeId);
-      
-      if (!actionType) throw new Error("Loại hành động không hợp lệ");
-      
-      return apiRequest("POST", "/api/actions", {
-        userId: user.id,
-        actionTypeId,
-        description: values.description,
-        points: actionType.points,
-        location: values.location || null,
-        imageUrl: values.imageUrl || null,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Thành công!",
-        description: "Hành động xanh của bạn đã được ghi nhận.",
-      });
-      
-      // Reset the form
-      form.reset();
-      setImagePreview(null);
-      
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/actions/user', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['/api/actions/recent', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users', user?.id] });
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể ghi nhận hành động.",
-      });
-    },
-  });
-  
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // For demonstration, we're using a placeholder URL
-    // In a real app, you would upload this to a service like Cloudinary
-    const fakeUrl = "https://images.unsplash.com/photo-1551893665-f843f600794e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80";
-    setImagePreview(fakeUrl);
-    form.setValue("imageUrl", fakeUrl);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setFormData({ ...formData, imageFile: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
   
-  const onSubmit = (data: ActionFormValues) => {
-    createAction.mutate(data);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form data:", formData);
+    setStep(4);
   };
+  
+  const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+  
+  const actionTypes = [
+    { id: 1, name: "Trồng cây", points: 50, icon: "🌱" },
+    { id: 2, name: "Tái chế", points: 15, icon: "♻️" },
+    { id: 3, name: "Tiết kiệm năng lượng", points: 10, icon: "💡" },
+    { id: 4, name: "Phương tiện công cộng", points: 20, icon: "🚌" },
+    { id: 5, name: "Dọn rác", points: 25, icon: "🧹" }
+  ];
   
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="actionTypeId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Loại hành động</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-                disabled={isLoadingActionTypes || createAction.isPending}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn loại hành động" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {actionTypes?.map((type: any) => (
-                    <SelectItem key={type.id} value={type.id.toString()}>
-                      <div className="flex items-center">
-                        <i className={`${type.icon} mr-2`}></i>
-                        <span>{type.name} ({type.points} điểm)</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mô tả</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Mô tả hành động của bạn..." 
-                  className="resize-none" 
-                  {...field} 
-                  disabled={createAction.isPending}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Địa điểm</FormLabel>
-              <div className="flex space-x-2">
-                <FormControl>
-                  <Input 
-                    placeholder="Nhập địa điểm" 
-                    {...field} 
-                    disabled={createAction.isPending}
-                  />
-                </FormControl>
-                <Button 
-                  type="button" 
-                  className="bg-secondary-light text-primary hover:bg-secondary hover:text-white" 
-                  disabled={createAction.isPending}
+    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+      {/* Progress steps */}
+      <div className="px-6 pt-6">
+        <div className="flex justify-between mb-2">
+          {["Loại hành động", "Mô tả", "Xác nhận", "Hoàn thành"].map((label, i) => (
+            <span key={i} className={`text-sm ${step > i ? "text-green-600 font-medium" : "text-gray-500"}`}>
+              {label}
+            </span>
+          ))}
+        </div>
+        <div className="flex h-2 mb-6">
+          {[1, 2, 3, 4].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 0.3, delay: i * 0.1 }}
+              className={`h-full ${
+                i <= step ? "bg-green-500" : "bg-gray-200"
+              } ${i === 1 ? "rounded-l-full" : ""} ${
+                i === 4 ? "rounded-r-full" : ""
+              } ${i !== 4 ? "mr-1" : ""}`}
+              style={{ flex: 1 }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="px-6 pb-6">
+        {/* Step 1: Loại hành động */}
+        {step === 1 && (
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <h2 className="text-2xl font-semibold text-gray-900">Chọn loại hành động xanh</h2>
+            <p className="text-gray-600">Hãy chọn loại hành động bảo vệ môi trường bạn vừa thực hiện</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              {actionTypes.map((type) => (
+                <motion.div
+                  key={type.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setFormData({ ...formData, actionType: type.name })}
+                  className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                    formData.actionType === type.name
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-200 hover:border-green-300"
+                  }`}
                 >
-                  <i className="ri-map-pin-line"></i>
-                </Button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <span className="text-2xl mr-3">{type.icon}</span>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{type.name}</h3>
+                        <p className="text-sm text-gray-500">+{type.points} điểm</p>
+                      </div>
+                    </div>
+                    {formData.actionType === type.name && (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="flex justify-end pt-6">
+              <motion.button
+                type="button"
+                onClick={nextStep}
+                disabled={!formData.actionType}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-6 py-3 rounded-full font-medium text-white shadow transition-all duration-200 ${
+                  formData.actionType
+                    ? "bg-gradient-to-r from-green-600 to-green-500 hover:shadow-md"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
+              >
+                Tiếp theo
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
         
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Ảnh minh họa</FormLabel>
-              <div className="border-2 border-dashed border-neutral rounded-lg p-4 text-center">
-                <input 
-                  type="file" 
-                  id="action-image" 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleImageChange}
-                  disabled={createAction.isPending}
-                  {...field}
+        {/* Step 2: Mô tả và hình ảnh */}
+        {step === 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <h2 className="text-2xl font-semibold text-gray-900">Mô tả hành động</h2>
+            <p className="text-gray-600">Chia sẻ thêm thông tin về hành động xanh của bạn</p>
+            
+            <div className="space-y-4 pt-4">
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Mô tả
+                </label>
+                <textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  placeholder="Mô tả hành động bảo vệ môi trường của bạn..."
+                  className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                  required
                 />
-                {imagePreview ? (
-                  <div className="flex flex-col items-center">
-                    <div className="relative w-full h-40 mb-2">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover rounded-md"
-                      />
+              </div>
+              
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa điểm
+                </label>
+                <div className="relative">
+                  <input
+                    id="location"
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Nhập địa điểm thực hiện..."
+                    className="block w-full rounded-xl border-gray-300 pl-10 shadow-sm focus:border-green-500 focus:ring-green-500"
+                    required
+                  />
+                  <Map className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ảnh minh họa
+                </label>
+                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-xl ${
+                  imagePreview ? "border-green-300 bg-green-50" : "border-gray-300 hover:border-green-300"
+                }`}>
+                  {!imagePreview ? (
+                    <div className="space-y-1 text-center">
+                      <div className="flex justify-center">
+                        <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                      </div>
+                      <div className="flex text-sm text-gray-600">
+                        <label
+                          htmlFor="file-upload"
+                          className="relative cursor-pointer rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none"
+                        >
+                          <span>Tải ảnh lên</span>
+                          <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                        <p className="pl-1">hoặc kéo thả vào đây</p>
+                      </div>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF lên đến 10MB</p>
+                    </div>
+                  ) : (
+                    <div className="relative w-full">
                       <button
                         type="button"
-                        className="absolute top-2 right-2 bg-white rounded-full p-1"
                         onClick={() => {
                           setImagePreview(null);
-                          onChange("");
+                          setFormData({ ...formData, imageFile: null });
                         }}
+                        className="absolute top-0 right-0 bg-red-500 rounded-full p-1 text-white"
                       >
-                        <i className="ri-close-line text-gray-500"></i>
+                        <X size={16} />
                       </button>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="mx-auto max-h-64 rounded-lg"
+                      />
                     </div>
-                    <span className="text-sm text-gray-500">Nhấp để thay đổi</span>
-                  </div>
-                ) : (
-                  <label htmlFor="action-image" className="flex flex-col items-center justify-center cursor-pointer">
-                    <i className="ri-upload-cloud-line text-3xl text-gray-400 mb-2"></i>
-                    <span className="text-sm text-gray-500">Nhấp để tải lên hoặc kéo thả hình ảnh</span>
-                    <span className="text-xs text-gray-400 mt-1">PNG, JPG (tối đa 5MB)</span>
-                  </label>
-                )}
+                  )}
+                </div>
               </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            </div>
+            
+            <div className="flex justify-between pt-6">
+              <motion.button
+                type="button"
+                onClick={prevStep}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 rounded-full font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-all duration-200"
+              >
+                Quay lại
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={nextStep}
+                disabled={!formData.description || !formData.location}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-6 py-3 rounded-full font-medium text-white shadow transition-all duration-200 ${
+                  formData.description && formData.location
+                    ? "bg-gradient-to-r from-green-600 to-green-500 hover:shadow-md"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
+              >
+                Tiếp theo
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
         
-        <div className="flex justify-end space-x-3 mt-6">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onSuccess}
-            disabled={createAction.isPending}
+        {/* Step 3: Xác nhận */}
+        {step === 3 && (
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
           >
-            Hủy
-          </Button>
-          <Button 
-            type="submit" 
-            className="bg-primary text-white hover:bg-primary-dark"
-            disabled={createAction.isPending}
+            <h2 className="text-2xl font-semibold text-gray-900">Xác nhận thông tin</h2>
+            <p className="text-gray-600">Vui lòng kiểm tra lại thông tin trước khi gửi</p>
+            
+            <div className="bg-gray-50 rounded-xl p-6 space-y-4">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                <div>
+                  <h3 className="font-medium text-gray-900">Loại hành động</h3>
+                  <p className="text-gray-600">{formData.actionType}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-sm text-green-600 hover:text-green-500"
+                >
+                  Sửa
+                </button>
+              </div>
+              
+              <div className="flex justify-between items-start py-4 border-b border-gray-200">
+                <div>
+                  <h3 className="font-medium text-gray-900">Mô tả</h3>
+                  <p className="text-gray-600">{formData.description}</p>
+                  <h3 className="font-medium text-gray-900 mt-3">Địa điểm</h3>
+                  <p className="text-gray-600">{formData.location}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="text-sm text-green-600 hover:text-green-500"
+                >
+                  Sửa
+                </button>
+              </div>
+              
+              {imagePreview && (
+                <div className="pt-4">
+                  <h3 className="font-medium text-gray-900 mb-2">Ảnh minh họa</h3>
+                  <img
+                    src={imagePreview}
+                    alt="Hành động xanh"
+                    className="max-h-64 rounded-lg mx-auto"
+                  />
+                </div>
+              )}
+              
+              <div className="pt-4">
+                <div className="rounded-xl bg-green-50 border border-green-200 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-green-800">Điểm thưởng</h3>
+                      <div className="mt-2 text-sm text-green-700">
+                        <p>Bạn sẽ nhận được <span className="font-bold">+20 điểm</span> sau khi gửi hành động này.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between pt-6">
+              <motion.button
+                type="button"
+                onClick={prevStep}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 rounded-full font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-all duration-200"
+              >
+                Quay lại
+              </motion.button>
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full font-medium shadow hover:shadow-md transition-all duration-200"
+              >
+                Gửi hành động
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+        
+        {/* Step 4: Hoàn thành */}
+        {step === 4 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center py-8"
           >
-            {createAction.isPending ? "Đang gửi..." : "Gửi hành động"}
-          </Button>
-        </div>
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex justify-center mb-6"
+            >
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-10 w-10 text-green-600" />
+              </div>
+            </motion.div>
+            
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Hành động đã được ghi nhận!</h2>
+            <p className="text-gray-600 mb-8">
+              Cảm ơn bạn đã đóng góp hành động xanh cho cộng đồng. Bạn đã nhận được <span className="font-medium text-green-600">+20 điểm</span>.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <motion.a
+                href="/actions"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-50 transition-all duration-200"
+              >
+                Xem danh sách hành động
+              </motion.a>
+              <motion.a
+                href="/actions/new"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full font-medium shadow hover:shadow-md transition-all duration-200"
+              >
+                Thêm hành động mới
+              </motion.a>
+            </div>
+          </motion.div>
+        )}
       </form>
-    </Form>
+    </div>
   );
 }

@@ -99,6 +99,21 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
+
+    // Khởi tạo người dùng mẫu
+  const user: User = {
+    id: 1,
+    username: "conghao",
+    email: "conghao1101@gmail.com",
+    password: "password123", 
+    displayName: "Lê Công Hào",
+    avatar: "",
+    bio: "Người yêu môi trường",
+    totalPoints: 100,
+    createdAt: new Date()
+  };
+  
+  this.users.set(user.id, user);
     // Create action types
     const actionTypes: InsertActionType[] = [
       { name: "Trồng cây", description: "Trồng cây xanh hoặc hoa", points: 5, icon: "ri-plant-line" },
@@ -151,7 +166,12 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const user: User = {
       id,
-      ...insertUser,
+      username: insertUser.username,
+      email: insertUser.email,
+      password: insertUser.password,
+      displayName: insertUser.displayName,
+      avatar: insertUser.avatar !== undefined ? insertUser.avatar : null,
+      bio: insertUser.bio !== undefined ? insertUser.bio : null,
       totalPoints: 0,
       createdAt: now
     };
@@ -199,7 +219,12 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const action: Action = {
       id,
-      ...insertAction,
+      userId: insertAction.userId,
+      description: insertAction.description,
+      actionTypeId: insertAction.actionTypeId,
+      points: insertAction.points,
+      location: insertAction.location !== undefined ? insertAction.location : null,
+      imageUrl: insertAction.imageUrl !== undefined ? insertAction.imageUrl : null,
       createdAt: now
     };
     this.actions.set(id, action);
@@ -365,7 +390,8 @@ export class MemStorage implements IStorage {
       ...insertGroup,
       createdAt: now,
       memberCount: 1,
-      totalPoints: 0
+      totalPoints: 0,
+      monthlyTarget: insertGroup.monthlyTarget ?? 0
     };
     this.groups.set(id, group);
     
@@ -384,6 +410,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const groupMember: GroupMember = {
       ...insertGroupMember,
+      isAdmin: insertGroupMember.isAdmin ?? false,
       joinedAt: now
     };
     this.groupMembers.set(key, groupMember);
@@ -428,8 +455,12 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const blogPost: BlogPost = {
       id,
-      ...insertBlogPost,
-      createdAt: now
+      title: insertBlogPost.title,
+      content: insertBlogPost.content,
+      authorId: insertBlogPost.authorId,
+      imageUrl: insertBlogPost.imageUrl ?? null,
+      createdAt: now,
+      isPublished: insertBlogPost.isPublished ?? false
     };
     this.blogPosts.set(id, blogPost);
     return blogPost;
@@ -457,6 +488,7 @@ export class MemStorage implements IStorage {
     const challenge: DailyChallenge = {
       id,
       ...insertChallenge,
+      active: insertChallenge.active ?? false,
       createdAt: now
     };
     this.dailyChallenges.set(id, challenge);
