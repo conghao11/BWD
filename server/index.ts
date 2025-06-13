@@ -70,10 +70,11 @@ app.use((req, res, next) => {
   }
 
 
-  const port = 5050;
-  server.listen(port, '127.0.0.1', () => {
-    log(`✅ Server is running at http://127.0.0.1:${port}`);
-  });
+  const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
 })();
 
 
