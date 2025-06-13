@@ -11,7 +11,7 @@ import Leaderboard from "@/pages/leaderboard";
 import Groups from "@/pages/groups";
 import Blog from "@/pages/blog";
 import Profile from "@/pages/profile";
-import { useAuth } from "./context/auth-context";
+import { AuthProvider, useAuth } from "./context/auth-context";
 import Layout from "./components/layout/layout";
 
 
@@ -21,6 +21,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 }
 function App() {
   return (
+   <AuthProvider>
     <TooltipProvider>
       <Toaster />
       <Layout>
@@ -40,6 +41,7 @@ function App() {
         </Switch>
       </Layout>
     </TooltipProvider>
+  </AuthProvider>
   );
 }
 

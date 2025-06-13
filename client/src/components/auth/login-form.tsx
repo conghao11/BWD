@@ -32,31 +32,40 @@ export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   
   const onSubmit = async (values: LoginFormValues) => {
-    setIsSubmitting(true);
-    
-    try {
-      const response = await apiRequest("POST", "/api/auth/login", values);
-      const data = await response.json();
-      
-      login(data);
-      
-      toast({
-        title: "Đăng nhập thành công",
-        description: "Chào mừng bạn trở lại với Cây Xanh Mỗi Ngày!",
-      });
-      
-      // Redirect to home page
-      window.location.href = "/";
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Đăng nhập thất bại",
-        description: error instanceof Error ? error.message : "Vui lòng kiểm tra lại email và mật khẩu",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  setIsSubmitting(true);
+  try {
+    const res = await apiRequest("POST", "/api/auth/login", values);
+    await throwIfResNotOk(res);
+
+    const me = await fetch("/api/auth/me", {
+      credentials: "include",
+    });
+
+    if (!me.ok) throw new Error("Không xác thực");
+
+    const user = await me.json();
+login(user); // cập nhật context
+
+toast({
+  title: "Đăng nhập thành công",
+  description: "Chào mừng bạn trở lại với GreenChallenge!",
+});
+
+// 👉 Thay vì reload toàn bộ, chỉ redirect bằng router
+window.location.assign("/profile"); // hoặc nếu dùng react-router: navigate("/profile")
+
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Đăng nhập thất bại",
+      description:
+        error instanceof Error ? error.message : "Email hoặc mật khẩu không đúng",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -116,3 +125,10 @@ export default function LoginForm() {
     </Card>
   );
 }
+function throwIfResNotOk(res: Response) {
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  }
+}
+
+

@@ -1,4 +1,4 @@
-// client/src/components/layout/mobile-nav.tsx
+
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Home, Award, BarChart2, FileText, Users, LogOut } from "lucide-react";
@@ -18,7 +18,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
     { path: "/actions", label: "Hành động xanh", icon: Award },
     { path: "/leaderboard", label: "Bảng xếp hạng", icon: BarChart2 },
     { path: "/blog", label: "Blog", icon: FileText },
-    { path: "/groups", label: "Tổ xanh", icon: Users },
+    { path: "/groups", label: "GreenChallenge", icon: Users },
   ];
 
   return (

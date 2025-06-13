@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FiCalendar, FiUser, FiTag, FiArrowRight, FiSearch } from "react-icons/fi";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-// Dữ liệu mẫu cho blog posts
+//du lieu mau
 const sampleBlogPosts = [
   {
     id: 1,
@@ -13,7 +13,7 @@ const sampleBlogPosts = [
     content: "Nhựa đang dần 'nuốt chửng' hành tinh của chúng ta. Theo thống kê, mỗi năm có khoảng 8 triệu tấn rác thải nhựa đổ ra đại dương, tương đương với việc đổ một xe rác đầy nhựa ra biển mỗi phút. Nếu tình trạng này tiếp tục, đến năm 2050, đại dương sẽ chứa nhiều nhựa hơn cá...",
     author: "Nguyễn Văn Anh",
     categories: ["Giảm rác thải", "Đời sống xanh"],
-    date: "2023-05-15",
+    date: "2025-05-15",
     readTime: "5 phút",
     imageUrl: "https://images.unsplash.com/photo-1605600659453-128663c3f0a0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   },
@@ -24,7 +24,7 @@ const sampleBlogPosts = [
     content: "Trồng cây không chỉ làm đẹp không gian sống mà còn góp phần cải thiện chất lượng không khí và tạo cảm giác thư giãn. Nghiên cứu đã chỉ ra rằng việc chăm sóc cây xanh có thể giảm stress và tăng cường sức khỏe tinh thần...",
     author: "Trần Minh Hương",
     categories: ["Trồng cây", "Không gian xanh"],
-    date: "2023-06-02",
+    date: "2025-06-02",
     readTime: "8 phút",
     imageUrl: "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   },
@@ -35,7 +35,7 @@ const sampleBlogPosts = [
     content: "Vào ngày 10 tháng 7 vừa qua, chiến dịch 'Biển Xanh 2023' đã diễn ra thành công rực rỡ với sự tham gia của 2.347 tình nguyện viên đến từ khắp mọi miền đất nước. Trong vòng 8 giờ đồng hồ, chúng tôi đã thu gom được 15 tấn rác thải, trong đó có 70% là rác thải nhựa...",
     author: "Lê Thanh Hải",
     categories: ["Chiến dịch xanh", "Bảo vệ biển"],
-    date: "2023-07-15",
+    date: "2025-07-15",
     readTime: "6 phút",
     imageUrl: "https://images.unsplash.com/photo-1621947081720-86970823b77a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   },
@@ -46,7 +46,7 @@ const sampleBlogPosts = [
     content: "Thuật ngữ 'hữu cơ' ngày càng phổ biến trong các cửa hàng thực phẩm và nhà hàng. Nhiều người lựa chọn thực phẩm hữu cơ không chỉ vì sức khỏe mà còn vì niềm tin rằng đây là lựa chọn thân thiện với môi trường. Nhưng liệu điều này có đúng không?...",
     author: "Phạm Quang Minh",
     categories: ["Thực phẩm xanh", "Nông nghiệp bền vững"],
-    date: "2023-07-28",
+    date: "2025-07-28",
     readTime: "10 phút",
     imageUrl: "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   },
@@ -57,7 +57,7 @@ const sampleBlogPosts = [
     content: "Ngành công nghiệp thời trang được biết đến là một trong những ngành gây ô nhiễm lớn nhất thế giới, đứng thứ hai sau ngành dầu khí. Tuy nhiên, những năm gần đây chứng kiến sự trỗi dậy của 'thời trang bền vững' - một phong trào nhằm thay đổi cách chúng ta sản xuất và tiêu thụ quần áo...",
     author: "Đỗ Thị Mai Anh",
     categories: ["Thời trang bền vững", "Tiêu dùng xanh"],
-    date: "2023-08-05",
+    date: "2025-08-05",
     readTime: "7 phút",
     imageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   },
@@ -68,13 +68,13 @@ const sampleBlogPosts = [
     content: "Nghệ thuật từ rác thải - một hình thức nghệ thuật đang ngày càng phổ biến - không chỉ mang lại vẻ đẹp thẩm mỹ mà còn truyền tải thông điệp mạnh mẽ về bảo vệ môi trường. Các nghệ sĩ trên khắp thế giới đang sáng tạo ra những tác phẩm đáng kinh ngạc từ những vật liệu mà nhiều người coi là 'rác'...",
     author: "Vũ Hoàng Nam",
     categories: ["Nghệ thuật xanh", "Tái chế sáng tạo"],
-    date: "2023-08-20",
+    date: "2025-08-20",
     readTime: "6 phút",
     imageUrl: "https://images.unsplash.com/photo-1567016526105-22da7c13161a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   },
 ];
 
-// Animation variants
+//animation
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -112,16 +112,9 @@ export default function Blog() {
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Thực tế, bạn sẽ gọi API để lấy dữ liệu
-  // const { data: blogPosts, isLoading } = useQuery({
-  //   queryKey: ["/api/blog-posts"],
-  // });
-  
-  // Sử dụng dữ liệu mẫu 
   const blogPosts = sampleBlogPosts;
   const isLoading = false;
   
-  // Lọc bài viết theo danh mục và từ khóa tìm kiếm
   const filteredPosts = blogPosts.filter(post => {
     const matchesCategory = activeCategory === "Tất cả" || post.categories.some(cat => 
       cat.toLowerCase().includes(activeCategory.toLowerCase())
@@ -138,7 +131,7 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Banner */}
+        
         <motion.div 
           initial="hidden"
           animate="visible"
@@ -166,7 +159,7 @@ export default function Blog() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
             >
-              Khám phá những câu chuyện, ý tưởng và hành động bảo vệ môi trường từ cộng đồng Cây Xanh Mỗi Ngày
+              Khám phá những câu chuyện, ý tưởng và hành động bảo vệ môi trường từ cộng đồng GreenChallenge
             </motion.p>
           </div>
         </motion.div>

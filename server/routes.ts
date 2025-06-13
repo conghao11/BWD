@@ -2,101 +2,153 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 import {
   insertUserSchema,
   insertActionSchema,
   insertGroupSchema,
   insertGroupMemberSchema,
   insertBlogPostSchema,
-  insertUserChallengeSchema
+  insertUserChallengeSchema,
+  users
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+
+// Extend express-session types to include user property
+declare module "express-session" {
+  interface SessionData {
+    user?: {
+      id: number;
+      email: string;
+      username: string;
+      displayName: string;
+    };
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  
-  // Auth routes
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
-    try {
-      const data = insertUserSchema.parse(req.body);
-      
-      // Check if email or username already exists
-      const existingEmail = await storage.getUserByEmail(data.email);
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email đã được sử dụng" });
-      }
-      
-      const existingUsername = await storage.getUserByUsername(data.username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Tên đăng nhập đã được sử dụng" });
-      }
-      
-      const user = await storage.createUser(data);
-      
-      // Return user without password
-      const { password, ...userWithoutPassword } = user;
-      
-      res.status(201).json(userWithoutPassword);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors });
-      }
-      res.status(500).json({ message: "Lỗi khi đăng ký" });
+
+// Schema xác thực đầu vào
+const insertUserSchema = z.object({
+  username: z.string().min(3),
+  email: z.string().email(),
+  displayName: z.string().min(2),
+  password: z.string().min(6),
+});
+
+app.post("/api/auth/register", async (req: Request, res: Response) => {
+  try {
+    const data = insertUserSchema.parse(req.body);
+
+    // Kiểm tra email đã tồn tại
+    const existingEmail = await db.select().from(users).where(eq(users.email, data.email));
+    if (existingEmail.length > 0) {
+      return res.status(400).json({ message: "Email đã được sử dụng" });
     }
-  });
+
+    // Kiểm tra username đã tồn tại
+    const existingUsername = await db.select().from(users).where(eq(users.username, data.username));
+    if (existingUsername.length > 0) {
+      return res.status(400).json({ message: "Tên đăng nhập đã được sử dụng" });
+    }
+
+    // Hash mật khẩu
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    // Tạo user trong DB
+    const [user] = await db.insert(users).values({
+      username: data.username,
+      email: data.email,
+      displayName: data.displayName,
+      password: hashedPassword,
+    }).returning();
+    console.log("Đã tạo user:", user);
+
+
+    // Lưu session
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      displayName: user.displayName,
+    };
+
+    const { password, ...userWithoutPassword } = user;
+    res.status(201).json(userWithoutPassword);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors });
+    }
+    console.error("Lỗi đăng ký:", error);
+    res.status(500).json({ message: "Lỗi khi đăng ký" });
+  }
+});
+
   
   app.post("/api/auth/login", async (req: Request, res: Response) => {
-    try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email và mật khẩu là bắt buộc" });
-      }
-      
-      const user = await storage.getUserByEmail(email);
-      
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
-      }
-      
-      // Return user without password
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.status(200).json(userWithoutPassword);
-    } catch (error) {
-      res.status(500).json({ message: "Lỗi khi đăng nhập" });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email và mật khẩu là bắt buộc" });
     }
-  });
-  
-  app.get("/api/auth/me", async (req: Request, res: Response) => {
-    try {
-      const { userId } = req.query;
-      
-      if (!userId) {
-        return res.status(401).json({ message: "Không xác thực" });
-      }
-      
-      const user = await storage.getUser(Number(userId));
-      
-      if (!user) {
-        return res.status(404).json({ message: "Người dùng không tồn tại" });
-      }
-      
-      // Return user without password
-      const { password, ...userWithoutPassword } = user;
-      
-      res.status(200).json(userWithoutPassword);
-    } catch (error) {
-      res.status(500).json({ message: "Lỗi khi lấy thông tin người dùng" });
+
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+
+    if (!user) {
+      console.log("Không tìm thấy user với email:", email);
+      return res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
     }
-  });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Sai mật khẩu cho user:", email);
+      return res.status(401).json({ message: "Email hoặc mật khẩu không đúng" });
+    }
+
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      displayName: user.displayName,
+    };
+
+    const { password: _, ...userWithoutPassword } = user;
+    res.status(200).json(userWithoutPassword);
+  } catch (error) {
+    console.error("Lỗi đăng nhập:", error);
+    res.status(500).json({ message: "Lỗi khi đăng nhập" });
+  }
+});
+
   
-  // User routes
+app.get("/debug/users", async (req, res) => {
+  const all = await db.select().from(users);
+  res.json(all);
+});
+
+app.get("/api/auth/me", async (req: Request, res: Response) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "Không xác thực" });
+  }
+  const [user] = await db.select().from(users).where(eq(users.id, req.session.user.id));
+  if (!user) {
+    return res.status(404).json({ message: "Người dùng không tồn tại" });
+  }
+  const { password, ...userWithoutPassword } = user;
+  res.status(200).json(userWithoutPassword);
+});
+
+
+
   app.get("/api/users/top", async (req: Request, res: Response) => {
     try {
       const limit = Number(req.query.limit) || 5;
       const topUsers = await storage.getTopUsers(limit);
       
-      // Return users without passwords
+     
       const usersWithoutPasswords = topUsers.map(user => {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
@@ -116,8 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "Người dùng không tồn tại" });
       }
-      
-      // Return user without password
+    
       const { password, ...userWithoutPassword } = user;
       
       res.status(200).json(userWithoutPassword);
@@ -130,21 +181,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const userId = Number(id);
-      
-      // Validate user exists
+  
       const existingUser = await storage.getUser(userId);
       if (!existingUser) {
         return res.status(404).json({ message: "Người dùng không tồn tại" });
       }
       
-      // Update user
       const updatedUser = await storage.updateUser(userId, req.body);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "Không thể cập nhật người dùng" });
       }
-      
-      // Return user without password
+  
       const { password, ...userWithoutPassword } = updatedUser;
       
       res.status(200).json(userWithoutPassword);
@@ -152,19 +200,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Lỗi khi cập nhật người dùng" });
     }
   });
-  
-  // Action routes
+
   app.post("/api/actions", async (req: Request, res: Response) => {
     try {
       const data = insertActionSchema.parse(req.body);
       
-      // Validate action type
       const actionType = await storage.getActionTypeById(data.actionTypeId);
       if (!actionType) {
         return res.status(404).json({ message: "Loại hành động không tồn tại" });
       }
       
-      // Validate user
       const user = await storage.getUser(data.userId);
       if (!user) {
         return res.status(404).json({ message: "Người dùng không tồn tại" });
@@ -197,7 +242,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const recentActions = await storage.getRecentActions(Number(userId), limit);
       
-      // Get action type details for each action
       const actionsWithTypes = await Promise.all(
         recentActions.map(async (action) => {
           const actionType = await storage.getActionTypeById(action.actionTypeId);

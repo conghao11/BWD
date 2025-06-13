@@ -1,6 +1,10 @@
 {
-  "include": ["client/src/**/*", "shared/**/*", "server/**/*"],
+  "include": ["client/src/**/*", "shared/**/*", "server/**/*", "init-db.ts"],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "ts-node": {
+    "transpileOnly": true, // Bỏ qua kiểm tra type để tăng tốc
+    "files": true // Đảm bảo ts-node nhận diện file ngoài src
+  },
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
@@ -12,7 +16,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {

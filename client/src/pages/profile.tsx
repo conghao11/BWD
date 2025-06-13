@@ -10,6 +10,8 @@ import {
 import { Tab } from "@headlessui/react";
 
 
+
+
 const sampleUserProfile = {
   id: 1,
   username: "leconghao",
@@ -53,26 +55,30 @@ const sampleUserProfile = {
   }
 };
 
+
+
+
+
 // Dữ liệu mẫu cho hành động gần đây
 const sampleRecentActions = [
   {
     id: 1,
-    title: "Trồng 3 cây xanh tại công viên Thống Nhất",
+    title: "Trồng 3 cây xanh tại công viên",
     type: "Trồng cây",
     points: 30,
-    date: "2023-05-10",
+    date: "2025-05-10",
     images: ["https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"],
-    location: "Công viên Thống Nhất, Hà Nội",
-    description: "Tham gia chương trình trồng cây xanh tại công viên Thống Nhất cùng nhóm Hà Nội Xanh."
+    location: "Đà Nẵng",
+    description: "Tham gia chương trình trồng cây xanh tại công viên cùng nhóm Hà Nội Xanh."
   },
   {
     id: 2,
     title: "Thu gom và phân loại rác thải",
     type: "Tái chế",
     points: 25,
-    date: "2023-05-05",
+    date: "2025-05-05",
     images: ["https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"],
-    location: "Quận Hai Bà Trưng, Hà Nội",
+    location: "Đaf Nẵng",
     description: "Thu gom và phân loại 5kg rác thải tại khu vực sống."
   },
   {
@@ -80,29 +86,29 @@ const sampleRecentActions = [
     title: "Sử dụng túi vải thay túi nilon trong 1 tuần",
     type: "Giảm rác thải nhựa",
     points: 20,
-    date: "2023-04-28",
+    date: "2025-04-28",
     images: ["https://images.unsplash.com/photo-1591503ecfcbec1cd36955096266590b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"],
-    location: "Hà Nội",
+    location: "Đà Nẵng",
     description: "Thực hiện sử dụng túi vải thay thế túi nilon trong sinh hoạt hàng ngày."
   },
   {
     id: 4,
-    title: "Dọn rác bãi biển Sầm Sơn",
+    title: "Dọn rác bãi biển Mỹ Khê",
     type: "Bảo vệ môi trường",
     points: 35,
-    date: "2023-04-20",
+    date: "2025-04-20",
     images: ["https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"],
-    location: "Bãi biển Sầm Sơn, Thanh Hóa",
-    description: "Tham gia chiến dịch làm sạch bãi biển Sầm Sơn cùng 50 tình nguyện viên khác."
+    location: "Đà Nẵng",
+    description: "Tham gia chiến dịch làm sạch bãi biển Mỹ Khê cùng 50 tình nguyện viên khác."
   },
   {
     id: 5,
     title: "Sử dụng năng lượng mặt trời cho gia đình",
     type: "Tiết kiệm năng lượng",
     points: 40,
-    date: "2023-04-15",
+    date: "2025-04-15",
     images: ["https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80"],
-    location: "Hà Nội",
+    location: "Đà Nẵng",
     description: "Lắp đặt hệ thống pin năng lượng mặt trời cho gia đình, giảm sử dụng điện lưới."
   }
 ];
@@ -183,47 +189,35 @@ function PerformanceChart({ data, colorClass = "bg-green-500" }: { data: number[
 }
 
 //tab
-function ProfileTabs() {
+function ProfileTabs({ userProfile }: { userProfile: typeof sampleUserProfile }) {
   const tabs = ["Tổng quan", "Hành động", "Huy hiệu", "Thống kê", "Nhóm"];
-  
+
   return (
     <Tab.Group>
-      <Tab.List className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
-        {tabs.map((tab) => (
-          <Tab
-            key={tab}
-            className={({ selected }) =>
-              `flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                selected
-                  ? 'bg-white text-green-700 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
-              }`
-            }
-          >
-            {tab}
-          </Tab>
-        ))}
+      <Tab.List className="...">
+        {/* ... giữ nguyên ... */}
       </Tab.List>
       <Tab.Panels>
         <Tab.Panel>
-          <Overview userProfile={sampleUserProfile} />
+          <Overview userProfile={userProfile} />
         </Tab.Panel>
         <Tab.Panel>
           <RecentActions actions={sampleRecentActions} />
         </Tab.Panel>
         <Tab.Panel>
-          <Badges badges={sampleUserProfile.badges} />
+          <Badges badges={userProfile.badges} />
         </Tab.Panel>
         <Tab.Panel>
-          <Statistics stats={sampleUserProfile.stats} />
+          <Statistics stats={userProfile.stats} />
         </Tab.Panel>
         <Tab.Panel>
-          <Groups groups={sampleUserProfile.groups} />
+          <Groups groups={userProfile.groups} />
         </Tab.Panel>
       </Tab.Panels>
     </Tab.Group>
   );
 }
+
 
 
 function Overview({ userProfile }: { userProfile: typeof sampleUserProfile }) {
@@ -646,7 +640,7 @@ function Groups({ groups }: { groups: typeof sampleUserProfile.groups }) {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-gray-800">{group.name}</h3>
-                  <p className="text-sm text-gray-500">Thành viên từ 04/2022</p>
+                  <p className="text-sm text-gray-500">Thành viên từ 04/2024</p>
                 </div>
               </div>
               
@@ -665,10 +659,10 @@ function Groups({ groups }: { groups: typeof sampleUserProfile.groups }) {
                 <div className="flex justify-between items-center">
                   <p className="text-sm">Hoạt động sắp tới:</p>
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    30/05/2023
+                    30/05/2025
                   </span>
                 </div>
-                <p className="text-gray-800 font-medium mt-1">Trồng cây xanh tại công viên Thống Nhất</p>
+                <p className="text-gray-800 font-medium mt-1">Trồng cây xanh tại công viên</p>
               </div>
             </div>
           </motion.div>
@@ -681,10 +675,10 @@ function Groups({ groups }: { groups: typeof sampleUserProfile.groups }) {
           <div className="w-16 h-16 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-4">
             <FiUsers className="text-gray-400 text-2xl" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-400 mb-2">Tham gia thêm Tổ xanh</h3>
+          <h3 className="text-lg font-semibold text-gray-400 mb-2">Tham gia thêm Nhóm</h3>
           <p className="text-sm text-gray-500 mb-4">Kết nối với cộng đồng để cùng nhau tạo tác động lớn hơn</p>
           <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            Khám phá Tổ xanh
+            Khám phá nhóm
           </button>
         </motion.div>
       </div>
@@ -693,10 +687,28 @@ function Groups({ groups }: { groups: typeof sampleUserProfile.groups }) {
 }
 
 export default function ProfilePage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
 
-  const userProfile = sampleUserProfile;
+  console.log("currentUser", currentUser); 
+
+  if (isLoading) {
+    return <div className="text-center py-20 text-gray-500">Đang tải dữ liệu người dùng...</div>;
+  }
+
+  if (!currentUser) {
+  return <div className="text-center py-20 text-gray-500">Đang tải hoặc chưa đăng nhập...</div>;
+}
+
+const userProfile = {
+  ...sampleUserProfile,
+  ...currentUser,
+  stats: sampleUserProfile.stats,
+  badges: sampleUserProfile.badges,
+  groups: sampleUserProfile.groups,
+};
+
+
   
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-16">
@@ -827,7 +839,8 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        <ProfileTabs />
+        <ProfileTabs userProfile={userProfile} />
+
       </div>
     </div>
   );

@@ -43,7 +43,6 @@ export default function RegisterForm() {
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     
-    // Remove confirmPassword as it's not needed for the API
     const { confirmPassword, ...data } = values;
     
     try {
@@ -52,12 +51,12 @@ export default function RegisterForm() {
       
       login(userData);
       
+      
       toast({
         title: "Đăng ký thành công",
-        description: "Chào mừng bạn đến với Cây Xanh Mỗi Ngày!",
+        description: "Chào mừng bạn đến với GreenChallenge!",
       });
-      
-      // Redirect to home page
+
       window.location.href = "/";
     } catch (error) {
       toast({

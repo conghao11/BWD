@@ -16,7 +16,9 @@ export default function Layout({ children }: LayoutProps) {
       <main className="container mx-auto px-4 py-6 mb-20 md:mb-6 flex-grow">
         {children}
       </main>
-      {isAuthenticated && <MobileNav />}
+      {isAuthenticated && <MobileNav isOpen={false} onClose={function (): void {
+        throw new Error("Function not implemented.");
+      } } />}
     </div>
   );
 }
